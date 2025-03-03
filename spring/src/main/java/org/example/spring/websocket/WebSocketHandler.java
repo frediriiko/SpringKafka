@@ -1,14 +1,13 @@
 package org.example.spring.websocket;
 
 import org.example.spring.service.MessageService;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -42,7 +41,6 @@ public class WebSocketHandler extends TextWebSocketHandler {
         logger.info("WebSocket closed: " + session.getId() + " with status " + status);
     }
 
-    // ✅ NEW METHOD: Broadcast message to all connected clients
     public void broadcastMessage(String message) {
         for (WebSocketSession session : sessions) {
             if (session.isOpen()) {
