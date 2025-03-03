@@ -1,11 +1,14 @@
 package org.example.spring.service;
 
 import org.example.spring.websocket.WebSocketHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 @Service
 public class MessageListenerService {
+    private static final Logger logger = LoggerFactory.getLogger(MessageListenerService.class);
 
     private final WebSocketHandler webSocketHandler;
 
@@ -15,6 +18,7 @@ public class MessageListenerService {
 
     @KafkaListener(topics = "messages", groupId = "message_id")
     public void listen(String message) {
+        logger.info("Received from Kafka: " + message);
         webSocketHandler.broadcastMessage(message);
     }
 }
