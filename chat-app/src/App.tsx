@@ -36,14 +36,21 @@ const ChatApp = () => {
         ws.current.close();
       }
     };
-  }, []); // Run only on mount
+  }, []);
 
   const sendMessage = () => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN && message.trim()) {
-      ws.current.send(message);
-      setMessage("");
+        const messageObject = {
+            author: "John",  // Replace with dynamic username later
+            content: message,
+            timestamp: new Date().toISOString(), // Include timestamp
+        };
+
+        ws.current.send(JSON.stringify(messageObject));
+        setMessage("");
     }
-  };
+};
+
 
   return (
     <div style={{ padding: "20px", maxWidth: "500px", margin: "auto" }}>

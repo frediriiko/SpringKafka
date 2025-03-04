@@ -1,5 +1,6 @@
 package org.example.spring.service;
 
+import org.example.spring.model.Message;
 import org.example.spring.websocket.WebSocketHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,8 +18,8 @@ public class MessageListenerService {
     }
 
     @KafkaListener(topics = "messages", groupId = "message_id")
-    public void listen(String message) {
-        logger.info("Received from Kafka: " + message);
+    public void listen(Message message) {
+        logger.info("Received from Kafka: " + message.getAuthor() + " " + message.getContent() + " " + message.getTimestamp());
         webSocketHandler.broadcastMessage(message);
     }
 }

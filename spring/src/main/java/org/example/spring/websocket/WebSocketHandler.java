@@ -1,5 +1,8 @@
 package org.example.spring.websocket;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.example.spring.model.Message;
 import org.example.spring.service.MessageService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,9 +20,11 @@ public class WebSocketHandler extends TextWebSocketHandler {
     private static final Logger logger = LoggerFactory.getLogger(WebSocketHandler.class);
     private final CopyOnWriteArrayList<WebSocketSession> sessions = new CopyOnWriteArrayList<>();
     private final MessageService messageService;
+    private final ObjectMapper objectMapper;
 
-    public WebSocketHandler(MessageService messageService) {  // ✅ Constructor Injection
+    public WebSocketHandler(MessageService messageService, ObjectMapper objectMapper) {
         this.messageService = messageService;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -31,8 +36,10 @@ public class WebSocketHandler extends TextWebSocketHandler {
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws IOException {
         logger.info("Received message: " + message.getPayload());
-        logger.info("Sending to Kafka: " + message.getPayload());
-        messageService.sendMessage(message.getPayload());
+
+        Message msg = objectMapper.readValue(message.getPayload(), Message.class);
+
+        messageService.sendMessage(msg);
     }
 
     @Override
@@ -41,15 +48,16 @@ public class WebSocketHandler extends TextWebSocketHandler {
         logger.info("WebSocket closed: " + session.getId() + " with status " + status);
     }
 
-    public void broadcastMessage(String message) {
-        for (WebSocketSession session : sessions) {
-            if (session.isOpen()) {
-                try {
-                    session.sendMessage(new TextMessage(message));
-                } catch (IOException e) {
-                    logger.error("Error sending WebSocket message", e);
+    public void broadcastMessage(Message message) {
+        try {
+            String jsonMessage = objectMapper.writeValueAsString(message);
+            for (WebSocketSession session : sessions) {
+                if (session.isOpen()) {
+                    session.sendMessage(new TextMessage(jsonMessage));
                 }
             }
+        } catch (IOException e) {
+            logger.error("Error sending WebSocket message", e);
         }
     }
 }
