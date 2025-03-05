@@ -1,12 +1,24 @@
 import { useState, useEffect, useRef } from "react";
+import {
+  Container,
+  Paper,
+  TextField,
+  Button,
+  Typography,
+  Card,
+  CardContent,
+  Box,
+} from "@mui/material";
 
 const ChatApp = () => {
   const ws = useRef<WebSocket | null>(null);
-  const [messages, setMessages] = useState<string[]>([]);
+  const [messages, setMessages] = useState<
+    { author: string; content: string; timestamp: string }[]
+  >([]);
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    if (ws.current) return; // Prevent duplicate connections
+    if (ws.current) return;
 
     ws.current = new WebSocket("ws://localhost:8080/ws");
 
@@ -15,7 +27,8 @@ const ChatApp = () => {
     };
 
     ws.current.onmessage = (event) => {
-      setMessages((prev) => [...prev, event.data]);
+      const receivedMessage = JSON.parse(event.data);
+      setMessages((prev) => [...prev, receivedMessage]);
     };
 
     ws.current.onclose = (event) => {
@@ -23,7 +36,7 @@ const ChatApp = () => {
       setTimeout(() => {
         console.log("🔄 Attempting to reconnect...");
         ws.current = new WebSocket("ws://localhost:8080/ws");
-      }, 5000); // Reconnect after 5 seconds
+      }, 5000);
     };
 
     ws.current.onerror = (error) => {
@@ -40,36 +53,60 @@ const ChatApp = () => {
 
   const sendMessage = () => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN && message.trim()) {
-        const messageObject = {
-            author: "John",  // Replace with dynamic username later
-            content: message,
-            timestamp: new Date().toISOString(), // Include timestamp
-        };
+      const messageObject = {
+        author: "John",
+        content: message,
+        timestamp: new Date().toISOString(),
+      };
 
-        ws.current.send(JSON.stringify(messageObject));
-        setMessage("");
+      ws.current.send(JSON.stringify(messageObject));
+      setMessage("");
     }
-};
-
+  };
 
   return (
-    <div style={{ padding: "20px", maxWidth: "500px", margin: "auto" }}>
-      <h2>Chat App</h2>
-      <div style={{ border: "1px solid black", padding: "10px", height: "300px", overflowY: "auto" }}>
-        {messages.map((msg, index) => (
-          <div key={index}>{msg}</div>
-        ))}
-      </div>
-      <input
-        type="text"
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        style={{ width: "80%", padding: "5px" }}
-      />
-      <button onClick={sendMessage} style={{ padding: "5px 10px" }}>
-        Send
-      </button>
-    </div>
+    <Container maxWidth="sm" sx={{ mt: 4 }}>
+      <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
+        <Typography variant="h5" gutterBottom align="center">
+          Chat App
+        </Typography>
+        <Box
+          sx={{
+            border: "1px solid #ccc",
+            borderRadius: 2,
+            p: 2,
+            height: 300,
+            overflowY: "auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: 1,
+          }}
+        >
+          {messages.map((msg, index) => (
+            <Card key={index} sx={{ backgroundColor: "#f5f5f5", p: 1 }}>
+              <CardContent>
+                <Typography variant="subtitle2" color="primary">
+                  {msg.author} - {new Date(msg.timestamp).toLocaleTimeString()}
+                </Typography>
+                <Typography>{msg.content}</Typography>
+              </CardContent>
+            </Card>
+          ))}
+        </Box>
+        <Box sx={{ display: "flex", mt: 2, gap: 1 }}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="Type a message..."
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+          />
+          <Button variant="contained" color="primary" onClick={sendMessage}>
+            Send
+          </Button>
+        </Box>
+      </Paper>
+    </Container>
   );
 };
 
