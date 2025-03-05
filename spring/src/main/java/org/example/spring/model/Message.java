@@ -11,16 +11,19 @@ public class Message {
     private String content;
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Instant timestamp;
+    private String roomId;
 
     public Message() {}
 
     @JsonCreator
     public Message(@JsonProperty("author") String author,
                    @JsonProperty("content") String content,
-                   @JsonProperty("timestamp") String timestamp) {
+                   @JsonProperty("timestamp") String timestamp,
+                   @JsonProperty("roomId") String roomId) {
         this.author = author;
         this.content = content;
         this.timestamp = Instant.parse(timestamp);
+        this.roomId = roomId;
     }
 
     public String getAuthor() {
@@ -47,12 +50,15 @@ public class Message {
         this.timestamp = timestamp;
     }
 
+    public String getRoomId() {return roomId;}
+
     @Override
     public String toString() {
         return String.format("Message{author='%s', content='%s', timestamp='%s'}",
                 author,
                 content,
-                timestamp);
+                timestamp,
+                roomId);
     }
 }
 

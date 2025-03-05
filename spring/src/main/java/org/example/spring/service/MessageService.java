@@ -18,6 +18,7 @@ public class MessageService {
 
     public void sendMessage(Message message) {
         log.info("Sending Message to kafka: {}", message.toString());
-        kafkaTemplate.send("messages", message);
+        String topic = "chat-" + message.getRoomId();
+        kafkaTemplate.send(topic, message);
     }
 }

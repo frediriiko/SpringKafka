@@ -8,6 +8,8 @@ import {
   Card,
   CardContent,
   Box,
+  Select,
+  MenuItem,
 } from "@mui/material";
 
 const ChatApp = () => {
@@ -16,14 +18,32 @@ const ChatApp = () => {
     { author: string; content: string; timestamp: string }[]
   >([]);
   const [message, setMessage] = useState("");
+  const [username, setUsername] = useState(""); // User's name
+  const [roomId, setRoomId] = useState(""); // Selected chat room
+  const [isConnected, setIsConnected] = useState(false);
 
-  useEffect(() => {
-    if (ws.current) return;
+  // Available chat rooms
+  const rooms = ["room-1", "room-2", "room-3"];
 
-    ws.current = new WebSocket("ws://localhost:8080/ws");
+  // Function to connect to WebSocket
+  const connectWebSocket = () => {
+    if (!username.trim() || !roomId.trim()) {
+      alert("Please enter a username and select a chat room.");
+      return;
+    }
+
+    // Close any existing WebSocket before opening a new one
+    if (ws.current) {
+      ws.current.close();
+    }
+
+    ws.current = new WebSocket(
+      `ws://localhost:8080/ws?roomId=${roomId}&username=${username}`
+    );
 
     ws.current.onopen = () => {
-      console.log("✅ Connected to WebSocket");
+      console.log(`✅ Connected to WebSocket (Room: ${roomId})`);
+      setIsConnected(true);
     };
 
     ws.current.onmessage = (event) => {
@@ -33,30 +53,22 @@ const ChatApp = () => {
 
     ws.current.onclose = (event) => {
       console.warn(`❌ WebSocket closed: Code ${event.code}, Reason: ${event.reason}`);
-      setTimeout(() => {
-        console.log("🔄 Attempting to reconnect...");
-        ws.current = new WebSocket("ws://localhost:8080/ws");
-      }, 5000);
+      setIsConnected(false);
     };
 
     ws.current.onerror = (error) => {
       console.error("⚠️ WebSocket Error: ", error);
     };
+  };
 
-    return () => {
-      if (ws.current && ws.current.readyState === WebSocket.OPEN) {
-        console.log("Closing WebSocket connection...");
-        ws.current.close();
-      }
-    };
-  }, []);
-
+  // Function to send messages
   const sendMessage = () => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN && message.trim()) {
       const messageObject = {
-        author: "John",
+        author: username,
         content: message,
         timestamp: new Date().toISOString(),
+        roomId: roomId,
       };
 
       ws.current.send(JSON.stringify(messageObject));
@@ -70,41 +82,90 @@ const ChatApp = () => {
         <Typography variant="h5" gutterBottom align="center">
           Chat App
         </Typography>
-        <Box
-          sx={{
-            border: "1px solid #ccc",
-            borderRadius: 2,
-            p: 2,
-            height: 300,
-            overflowY: "auto",
-            display: "flex",
-            flexDirection: "column",
-            gap: 1,
-          }}
-        >
-          {messages.map((msg, index) => (
-            <Card key={index} sx={{ backgroundColor: "#f5f5f5", p: 1 }}>
-              <CardContent>
-                <Typography variant="subtitle2" color="primary">
-                  {msg.author} - {new Date(msg.timestamp).toLocaleTimeString()}
-                </Typography>
-                <Typography>{msg.content}</Typography>
-              </CardContent>
-            </Card>
-          ))}
-        </Box>
-        <Box sx={{ display: "flex", mt: 2, gap: 1 }}>
-          <TextField
-            fullWidth
-            variant="outlined"
-            placeholder="Type a message..."
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-          />
-          <Button variant="contained" color="primary" onClick={sendMessage}>
-            Send
-          </Button>
-        </Box>
+
+        {!isConnected ? (
+          <>
+            <TextField
+              fullWidth
+              label="Username"
+              variant="outlined"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              sx={{ mb: 2 }}
+            />
+            <Select
+              fullWidth
+              value={roomId}
+              onChange={(e) => setRoomId(e.target.value)}
+              displayEmpty
+              sx={{ mb: 2 }}
+            >
+              <MenuItem value="" disabled>
+                Select a chat room
+              </MenuItem>
+              {rooms.map((room) => (
+                <MenuItem key={room} value={room}>
+                  {room}
+                </MenuItem>
+              ))}
+            </Select>
+            <Button variant="contained" color="primary" onClick={connectWebSocket}>
+              Join Room
+            </Button>
+          </>
+        ) : (
+          <>
+            <Typography variant="subtitle1" gutterBottom>
+              Connected as: <b>{username}</b> in <b>{roomId}</b>
+            </Typography>
+
+            <Box
+              sx={{
+                border: "1px solid #ccc",
+                borderRadius: 2,
+                p: 2,
+                height: 300,
+                overflowY: "auto",
+                display: "flex",
+                flexDirection: "column",
+                gap: 1,
+              }}
+            >
+              {messages.map((msg, index) => (
+                <Card key={index} sx={{ backgroundColor: "#f5f5f5", p: 1 }}>
+                  <CardContent>
+                    <Typography variant="subtitle2" color="primary">
+                      {msg.author} - {new Date(msg.timestamp).toLocaleTimeString()}
+                    </Typography>
+                    <Typography>{msg.content}</Typography>
+                  </CardContent>
+                </Card>
+              ))}
+            </Box>
+
+            <Box sx={{ display: "flex", mt: 2, gap: 1 }}>
+              <TextField
+                fullWidth
+                variant="outlined"
+                placeholder="Type a message..."
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+              />
+              <Button variant="contained" color="primary" onClick={sendMessage}>
+                Send
+              </Button>
+            </Box>
+
+            <Button
+              variant="contained"
+              color="secondary"
+              sx={{ mt: 2 }}
+              onClick={() => setIsConnected(false)}
+            >
+              Leave Room
+            </Button>
+          </>
+        )}
       </Paper>
     </Container>
   );
