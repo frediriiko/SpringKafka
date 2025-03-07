@@ -18,25 +18,31 @@ const ChatApp = () => {
     { author: string; content: string; timestamp: string }[]
   >([]);
   const [message, setMessage] = useState("");
-  const [username, setUsername] = useState(""); // User's name
-  const [roomId, setRoomId] = useState(""); // Selected chat room
+  const [username, setUsername] = useState(""); // Stores the user's name
+  const [roomId, setRoomId] = useState(""); // Stores the selected room
   const [isConnected, setIsConnected] = useState(false);
 
   // Available chat rooms
   const rooms = ["room-1", "room-2", "room-3"];
 
-  // Function to connect to WebSocket
+  /**
+   * Connects to the WebSocket server with the selected room & username.
+   */
   const connectWebSocket = () => {
     if (!username.trim() || !roomId.trim()) {
       alert("Please enter a username and select a chat room.");
       return;
     }
 
-    // Close any existing WebSocket before opening a new one
+    // Close existing WebSocket connection if one exists
     if (ws.current) {
       ws.current.close();
     }
 
+    // Clear messages when switching rooms
+    setMessages([]);
+
+    // Create a new WebSocket connection
     ws.current = new WebSocket(
       `ws://localhost:8080/ws?roomId=${roomId}&username=${username}`
     );
@@ -52,7 +58,9 @@ const ChatApp = () => {
     };
 
     ws.current.onclose = (event) => {
-      console.warn(`❌ WebSocket closed: Code ${event.code}, Reason: ${event.reason}`);
+      console.warn(
+        `❌ WebSocket closed: Code ${event.code}, Reason: ${event.reason}`
+      );
       setIsConnected(false);
     };
 
@@ -61,7 +69,9 @@ const ChatApp = () => {
     };
   };
 
-  // Function to send messages
+  /**
+   * Sends a message to the WebSocket server.
+   */
   const sendMessage = () => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN && message.trim()) {
       const messageObject = {
@@ -74,6 +84,17 @@ const ChatApp = () => {
       ws.current.send(JSON.stringify(messageObject));
       setMessage("");
     }
+  };
+
+  /**
+   * Disconnect from the WebSocket and reset state.
+   */
+  const leaveRoom = () => {
+    if (ws.current) {
+      ws.current.close();
+    }
+    setIsConnected(false);
+    setMessages([]); // Clear messages on leave
   };
 
   return (
@@ -119,6 +140,7 @@ const ChatApp = () => {
               Connected as: <b>{username}</b> in <b>{roomId}</b>
             </Typography>
 
+            {/* Message List */}
             <Box
               sx={{
                 border: "1px solid #ccc",
@@ -143,6 +165,7 @@ const ChatApp = () => {
               ))}
             </Box>
 
+            {/* Message Input */}
             <Box sx={{ display: "flex", mt: 2, gap: 1 }}>
               <TextField
                 fullWidth
@@ -156,11 +179,12 @@ const ChatApp = () => {
               </Button>
             </Box>
 
+            {/* Leave Room Button */}
             <Button
               variant="contained"
               color="secondary"
               sx={{ mt: 2 }}
-              onClick={() => setIsConnected(false)}
+              onClick={leaveRoom}
             >
               Leave Room
             </Button>

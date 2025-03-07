@@ -17,7 +17,7 @@ public class MessageListenerService {
         this.webSocketHandler = webSocketHandler;
     }
 
-    @KafkaListener(topicPattern = "chat-room-.*", groupId = "message_id")
+    @KafkaListener(topics = {"chat-room-1", "chat-room-2", "chat-room-3"}, groupId = "message_id")
     public void listen(Message message) {
         logger.info("Received from Kafka: " + message.getAuthor() + " " + message.getContent() + " " + message.getTimestamp());
         webSocketHandler.broadcastMessage(message);
