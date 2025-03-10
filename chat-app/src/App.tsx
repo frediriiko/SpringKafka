@@ -9,8 +9,10 @@ import {
   CardContent,
   Box,
   Select,
-  MenuItem,
+  MenuItem,  List, ListItem, ListItemText, 
 } from "@mui/material";
+import axios from "axios"; // Import Axios
+import ChatMessage from "./components/ChatMessage";
 
 const ChatApp = () => {
   const ws = useRef<WebSocket | null>(null);
@@ -21,13 +23,33 @@ const ChatApp = () => {
   const [username, setUsername] = useState("");
   const [roomId, setRoomId] = useState(""); 
   const [isConnected, setIsConnected] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const rooms = ["room-1", "room-2", "room-3"];
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+  
+
+  /**
+   * Fetch chat history from REST API
+   */
+  const fetchChatHistory = async (roomId: string) => {
+    try {
+      const response = await axios.get(`http://localhost:8080/api/messages/${roomId}`);
+      setMessages(response.data); // Set messages from API
+    } catch (error) {
+      console.error("Error fetching chat history:", error);
+    }
+  };
 
   /**
    * Connects to the WebSocket server with the selected room & username.
    */
-  const connectWebSocket = () => {
+  const connectWebSocket = async () => {
     if (!username.trim() || !roomId.trim()) {
       alert("Please enter a username and select a chat room.");
       return;
@@ -37,7 +59,10 @@ const ChatApp = () => {
       ws.current.close();
     }
 
-    setMessages([]);
+    setMessages([]); // Clear messages before fetching history
+
+    // Fetch chat history before connecting to WebSocket
+    await fetchChatHistory(roomId);
 
     ws.current = new WebSocket(
       `ws://localhost:8080/ws?roomId=${roomId}&username=${username}`
@@ -132,28 +157,31 @@ const ChatApp = () => {
 
             {/* Message List */}
             <Box
-              sx={{
-                border: "1px solid #ccc",
-                borderRadius: 2,
-                p: 2,
-                height: 300,
-                overflowY: "auto",
-                display: "flex",
-                flexDirection: "column",
-                gap: 1,
-              }}
-            >
+            component={Paper}
+            elevation={2}
+            sx={{
+              borderRadius: 2,
+              height: 300, // Fixed height for scrollability
+              overflowY: "auto", // Enables vertical scrolling
+              p: 2,
+              display: "flex",
+              flexDirection: "column",
+            }}
+          >
+            <List sx={{ width: "100%", padding: 0 }}>
               {messages.map((msg, index) => (
-                <Card key={index} sx={{ backgroundColor: "#f5f5f5", p: 1 }}>
-                  <CardContent>
-                    <Typography variant="subtitle2" color="primary">
-                      {msg.author} - {new Date(msg.timestamp).toLocaleTimeString()}
-                    </Typography>
-                    <Typography>{msg.content}</Typography>
-                  </CardContent>
-                </Card>
+                <ChatMessage
+                  key={index}
+                  author={msg.author}
+                  content={msg.content}
+                  timestamp={msg.timestamp}
+                  isCurrentUser={msg.author === username}
+                />
               ))}
-            </Box>
+              <div ref={messagesEndRef} />
+            </List>
+          </Box>
+
 
             {/* Message Input */}
             <Box sx={{ display: "flex", mt: 2, gap: 1 }}>
