@@ -18,11 +18,10 @@ const ChatApp = () => {
     { author: string; content: string; timestamp: string }[]
   >([]);
   const [message, setMessage] = useState("");
-  const [username, setUsername] = useState(""); // Stores the user's name
-  const [roomId, setRoomId] = useState(""); // Stores the selected room
+  const [username, setUsername] = useState("");
+  const [roomId, setRoomId] = useState(""); 
   const [isConnected, setIsConnected] = useState(false);
 
-  // Available chat rooms
   const rooms = ["room-1", "room-2", "room-3"];
 
   /**
@@ -34,15 +33,12 @@ const ChatApp = () => {
       return;
     }
 
-    // Close existing WebSocket connection if one exists
     if (ws.current) {
       ws.current.close();
     }
 
-    // Clear messages when switching rooms
     setMessages([]);
 
-    // Create a new WebSocket connection
     ws.current = new WebSocket(
       `ws://localhost:8080/ws?roomId=${roomId}&username=${username}`
     );
@@ -65,13 +61,10 @@ const ChatApp = () => {
     };
 
     ws.current.onerror = (error) => {
-      console.error("⚠️ WebSocket Error: ", error);
+      console.error("WebSocket Error: ", error);
     };
   };
 
-  /**
-   * Sends a message to the WebSocket server.
-   */
   const sendMessage = () => {
     if (ws.current && ws.current.readyState === WebSocket.OPEN && message.trim()) {
       const messageObject = {
@@ -86,9 +79,6 @@ const ChatApp = () => {
     }
   };
 
-  /**
-   * Disconnect from the WebSocket and reset state.
-   */
   const leaveRoom = () => {
     if (ws.current) {
       ws.current.close();

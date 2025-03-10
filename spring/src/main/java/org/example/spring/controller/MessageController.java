@@ -20,7 +20,7 @@ public class MessageController {
 
     @PostMapping("/messages")
     public void sendMessage(@RequestBody Message message) {
-        log.info("📩 Received API request to send message: {}", message);
+        log.info("Received API request to send message: {}", message);
         messageService.sendMessage(message);
     }
 

@@ -61,11 +61,11 @@ public class WebSocketHandler extends TextWebSocketHandler {
             Set<WebSocketSession> sessions = roomSessions.get(message.getRoomId());
 
             if (sessions == null || sessions.isEmpty()) {
-                logger.warn("⚠️ No active WebSocket sessions for room: {}", message.getRoomId());
+                logger.warn(" No active WebSocket sessions for room: {}", message.getRoomId());
                 return;
             }
 
-            logger.info("📢 Broadcasting message to {} sessions in room: {}", sessions.size(), message.getRoomId());
+            logger.info("Broadcasting message to {} sessions in room: {}", sessions.size(), message.getRoomId());
 
             for (WebSocketSession session : sessions) {
                 if (session.isOpen()) {
@@ -74,7 +74,7 @@ public class WebSocketHandler extends TextWebSocketHandler {
             }
 
         } catch (IOException e) {
-            logger.error("❌ Error sending WebSocket message", e);
+            logger.error("Error sending WebSocket message", e);
         }
     }
 
