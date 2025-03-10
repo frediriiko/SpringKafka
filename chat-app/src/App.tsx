@@ -5,14 +5,14 @@ import {
   TextField,
   Button,
   Typography,
-  Card,
-  CardContent,
   Box,
   Select,
-  MenuItem,  List, ListItem, ListItemText, 
+  MenuItem,
+  List,
 } from "@mui/material";
 import axios from "axios"; // Import Axios
 import ChatMessage from "./components/ChatMessage";
+
 
 const ChatApp = () => {
   const ws = useRef<WebSocket | null>(null);
@@ -40,7 +40,7 @@ const ChatApp = () => {
   const fetchChatHistory = async (roomId: string) => {
     try {
       const response = await axios.get(`http://localhost:8080/api/messages/${roomId}`);
-      setMessages(response.data); // Set messages from API
+      setMessages(response.data);
     } catch (error) {
       console.error("Error fetching chat history:", error);
     }

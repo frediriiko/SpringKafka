@@ -1,4 +1,4 @@
-import { ListItem, ListItemText, Paper, Typography } from "@mui/material";
+import { ListItem, Paper, Typography } from "@mui/material";
 
 interface ChatMessageProps {
   author: string;
